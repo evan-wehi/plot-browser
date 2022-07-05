@@ -4,66 +4,66 @@
       "filename": "DG15 - cell counts.jpg",
       "patient": "DG19",
       "graph": "population over time",
-      "value": 1
+      "some-value": 1
     },
     {
       "filename": "DG15 - histograms - Bcl2.jpg",
       "patient": "DG19",
       "graph": "histograms",
       "protein": "Bcl2",
-      "value": 1
+      "some-value": 1
     },
     {
       "filename": "DG15 - mean level - Bcl2.jpg",
       "patient": "DG19",
       "graph": "protein mean over time",
-      "value": 1
+      "some-value": 1
     },
     {
       "filename": "DG19 - Bcl2.jpg",
       "patient": "DG19",
       "graph": "histograms",
       "protein": "Bcl2",
-      "value": 2
+      "some-value": 2
     },
     {
       "filename": "DG19 - Bcl_xL.jpg",
       "patient": "DG19",
       "graph": "histograms",
       "protein": "Bcl_xL",
-      "value": 3
+      "some-value": 3
     },
     {
       "filename": "DG19 - Bim.jpg",
       "patient": "DG19",
       "graph": "histograms",
       "protein": "Bim",
-      "value": 4
+      "some-value": 4
     },
     {
       "filename": "DG19 - Mcl_1.jpg",
       "patient": "DG19",
       "graph": "histograms",
       "protein": "Mcl1",
-      "value": 9
+      "some-value": 9
     },
     {
       "filename": "DG19 - counts.jpg",
       "patient": "DG19",
       "graph": "population over time",
-      "value": 1
+      "some-value": 1
     },
     {
       "filename": "DG19 - means.jpg",
       "patient": "DG19",
       "graph": "protein mean over time",
-      "value": 1
+      "some-value": 1
     },
     {
       "filename": "DG19 - medians.jpg",
       "patient": "DG19",
       "graph": "protein median over time",
-      "value": 1
+      "some-value": 1
     }
   ]
 }

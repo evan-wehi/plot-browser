@@ -29,13 +29,15 @@ struct Ge <: Operator{Number} end
 label(::Ge) = "≥"
 (op::Ge)(test::Number)::Bool = test ≥ op.value
 
-struct PredicateTemplate{T}
+mutable struct PredicateTemplate{T}
   key::String
   operators::Vector{Operator}
+  values::Set{T}
 end
-PredicateTemplate(key::String, ::String) = PredicateTemplate{String}(key, operatorsFor(String))
-PredicateTemplate(key::String, ::Number) = PredicateTemplate{Number}(key, operatorsFor(Number))
+PredicateTemplate(key::String, ::String) = PredicateTemplate{String}(key, operatorsFor(String), Set{String}())
+PredicateTemplate(key::String, ::Number) = PredicateTemplate{Number}(key, operatorsFor(Number), Set{Number}())
 operatorsFor(T::Type)::Vector{Operator} = filter((o) -> T <: opType(o), [o() for o in subtypes(Operator)])
+addValue!(p::PredicateTemplate{T}, v::T) where T = push!(p.values, v)
 
 struct Predicate{T}
   key::String
@@ -72,7 +74,10 @@ function makeTemplates(entries::Vector{Dict{String, Any}})::Vector{PredicateTemp
   td = Dict{String, PredicateTemplate}()
   for e in entries
     for (k, v) in e
-      td[k] = PredicateTemplate(k, v)
+      if !haskey(td, k)
+        td[k] = PredicateTemplate(k, v)
+      end
+      addValue!(td[k], v)
     end
   end
 
