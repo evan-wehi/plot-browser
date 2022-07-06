@@ -5,12 +5,12 @@ include("queries.jl")
 include("state.jl")
 include("ui.jl")
 
-DATA_DIR = "sample"
+dataDir = ARGS[1]
 
 app = dash(external_stylesheets=[dbc_themes.SANDSTONE])
 app.title = "Plot Browser"
 
-createUi!(app, DATA_DIR)
+createUi!(app, dataDir)
   
 run_server(app, "0.0.0.0", debug=true)
 
