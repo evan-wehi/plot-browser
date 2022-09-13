@@ -1,12 +1,14 @@
 using Dash, DashBootstrapComponents
 
+STYLE = Dict("margin" => "10px")
+
 navButton(txt, id, disabled) = dbc_button(txt,
   color = "primary", 
   className = "me-1", 
   n_clicks = 0, 
   id = id, 
   disabled = disabled,
-  style = Dict("margin" => "10px")
+  style = STYLE
   )
 
 function queryForm(app::Dash.DashApp, state::DiskState, predicateTemplate::PredicateTemplate)
@@ -19,10 +21,10 @@ function queryForm(app::Dash.DashApp, state::DiskState, predicateTemplate::Predi
   store = dcc_store(id = "$(key)-store")
 
   form = dbc_inputgroup([
-    dbc_inputgrouptext(key, id = "$(key)-label", style = Dict("margin" => "10px"))
-    dbc_select(id = "$(key)-op", options = opList, style = Dict("margin" => "10px"))
-    dbc_select(id = "$(key)-value", options = valList, style = Dict("margin" => "10px"))
-    dbc_button("X", id = "$(key)-clear", color = "light", style = Dict("margin" => "10px"))
+    dbc_inputgrouptext(key, id = "$(key)-label", style = STYLE)
+    dbc_select(id = "$(key)-op", options = opList, style = STYLE)
+    dbc_select(id = "$(key)-value", options = valList, style = STYLE)
+    dbc_button("X", id = "$(key)-clear", color = "light", style = STYLE)
     store
   ],
   id = id)
