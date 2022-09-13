@@ -12,5 +12,5 @@ app.title = "Plot Browser"
 
 createUi!(app, dataDir)
   
-run_server(app, "0.0.0.0", debug=true)
+run_server(app, "0.0.0.0", 8080, debug=true)
 
