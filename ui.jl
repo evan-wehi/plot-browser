@@ -138,11 +138,15 @@ function createUi!(app::Dash.DashApp, dataDir::String)
 
   app.layout = dbc_container([
   html_center([
-    html_div(
-      html_img(src=getCurrentImage(state), id="image")
-    )
-    navButtons
-    queryForms...
+    html_div([
+      dbc_row([
+        dbc_col(html_img(src=getCurrentImage(state), id="image"))
+        dbc_col(html_div([
+          navButtons
+          queryForms...
+        ]))
+      ])
+    ])
   ])
   dcc_store(id = "global-state", data=state)
 ])
@@ -191,7 +195,10 @@ function getCurrentImage(s::Dict{String, Any})
   end
 
   fn = s["images"][s["currentIndex"]]
+  if !isfile(fn)
+    fn = "assets/broken-image.png"
+  end
+    
   s = read(fn)
-  
   return "data:image/png;base64," * base64encode(s)
 end

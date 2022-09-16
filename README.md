@@ -9,3 +9,4 @@ julia app.jl <images directory>
 The images directory should have images files and JSON file with metadata called `images.json`. Look in `sample/images.json` for an example.
 
 
+The broken image icon is from [https://thenounproject.com/] and was created by Ryan Beck.
