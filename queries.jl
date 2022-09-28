@@ -8,10 +8,12 @@ opType(::Operator{T}) where T = T
 struct Eq <: Operator{Any} end
 label(::Eq) = "="
 (op::Eq)(test::Any, value::Any)::Bool = test == value
+(op::Eq)(test::Bool, value::Any)::Bool = value == (test ? "true" : "false")
 
 struct Ne <: Operator{Any} end
 label(::Ne) = "≠"
 (op::Ne)(test::Any, value::Any)::Bool = test ≠ value
+(op::Ne)(test::Any, value::Bool)::Bool = value ≠ (test ? "true" : "false")
 
 struct Lt <: Operator{Number} end
 label(::Lt) = "<"
@@ -34,15 +36,18 @@ mutable struct PredicateTemplate{T}
   operators::Dict{String, Operator}
   values::Set{T}
 end
-PredicateTemplate(key::String, ::String) = PredicateTemplate{String}(key, operatorsFor(String), Set{String}())
-PredicateTemplate(key::String, ::Number) = PredicateTemplate{Number}(key, operatorsFor(Number), Set{Number}())
+PredicateTemplate(key::String, ::String)  = PredicateTemplate{String}(key, operatorsFor(String), Set{String}())
+PredicateTemplate(key::String, ::Nothing) = PredicateTemplate{String}(key, operatorsFor(String), Set{String}())
+PredicateTemplate(key::String, ::Number)  = PredicateTemplate{Number}(key, operatorsFor(Number), Set{Number}())
+PredicateTemplate(key::String, ::Bool)    = PredicateTemplate{String}(key, operatorsFor(String), Set{String}())
 function operatorsFor(T::Type)::Dict{String, Operator} 
   ops = filter((o) -> T <: opType(o), [o() for o in subtypes(Operator)])
   keys = [label(o) for o in ops]
   Dict(keys .=> ops)
 end
+addValue!(p::PredicateTemplate{String}, v::Bool) = push!(p.values, v ? "true" : "false")
 addValue!(p::PredicateTemplate{T}, v::T) where T = push!(p.values, v)
-
+addValue!(p::PredicateTemplate{String}, ::Nothing) = push!(p.values, "")
 
 struct Predicate{T}
   key::String
@@ -52,6 +57,14 @@ end
 function Predicate(key::String, op::String, val::String, template::PredicateTemplate{String})
   op = template.operators[op]
   Predicate(key, op, val)
+end
+function Predicate(key::String, op::String, ::Nothing, template::PredicateTemplate{String})
+  op = template.operators[op]
+  Predicate(key, op, "")
+end
+function Predicate(key::String, op::String, val::Bool, template::PredicateTemplate{String})
+  op = template.operators[op]
+  Predicate(key, op, val ? "true" : "false")
 end
 function Predicate(key::String, op::String, val::String, template::PredicateTemplate{T}) where T <: Number
   op = template.operators[op]
