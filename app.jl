@@ -1,13 +1,17 @@
 using Dash, DashBootstrapComponents
-
 using JSON, Base64
+
 include("queries.jl")
 include("state.jl")
 include("ui.jl")
 
 dataDir = ARGS[1]
 
-app = dash(external_stylesheets=[dbc_themes.SANDSTONE])
+# url_base_pathname = dash_env("url_base_pathname"),
+# requests_pathname_prefix = dash_env("requests_pathname_prefix"),
+# routes_pathname_prefix = dash_env("routes_pathname_prefix"),
+# 
+app = dash(url_base_pathname="/plots/", external_stylesheets=[dbc_themes.SANDSTONE])
 app.title = "Plot Browser"
 
 createUi!(app, dataDir)
