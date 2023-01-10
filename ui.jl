@@ -1,5 +1,7 @@
 using Dash, DashBootstrapComponents
 
+include("content.jl")
+
 STYLE = Dict("margin" => "10px")
 
 navButton(txt, id, disabled) = dbc_button(txt,
@@ -11,17 +13,19 @@ navButton(txt, id, disabled) = dbc_button(txt,
   style = STYLE
   )
 
-function queryForm(app::Dash.DashApp, state::DiskState, predicateTemplate::PredicateTemplate)
+function queryForm(url::String, state::DiskState, predicateTemplate::PredicateTemplate)
   key = predicateTemplate.key
-  id = "$(key)-predicate"
+  id = "$(url)-$(key)-predicate"
 
   opList = [Dict("label" => label(op), "value" => label(op)) for op in values(predicateTemplate.operators)]
   valList = [Dict("label" => v, "value" => v) for v in predicateTemplate.values]
   
   store = dcc_store(id = "$(key)-store")
 
+  ll = join(split(key, "-")[2:end], "-")
+
   form = dbc_inputgroup([
-    dbc_inputgrouptext(key, id = "$(key)-label", style = STYLE)
+    dbc_inputgrouptext(ll, id = "$(url)-$(key)-label", style = STYLE)
     dbc_select(id = "$(key)-op", options = opList, style = STYLE)
     dbc_select(id = "$(key)-value", options = valList, style = STYLE)
     dbc_button("X", id = "$(key)-clear", color = "light", style = STYLE)
@@ -29,6 +33,12 @@ function queryForm(app::Dash.DashApp, state::DiskState, predicateTemplate::Predi
   ],
   id = id)
   
+  
+  html_div(form, style = Dict("maxWidth" => "800px"))
+end
+
+function addQueryFormCallbacks!(app::Dash.DashApp, predicateTemplate::PredicateTemplate)
+  key = predicateTemplate.key
   callback!(
     app,
     Output("$(key)-store", "data"),
@@ -39,10 +49,8 @@ function queryForm(app::Dash.DashApp, state::DiskState, predicateTemplate::Predi
     Input("$(key)-clear", "n_clicks"),
     prevent_initial_call = true
     ) do _, _, _
-    return handlePredicateCallback(key, callback_context())
+      return handlePredicateCallback(key, callback_context())
   end
-  
-  html_div(form, style = Dict("max-width" => "800px"))
 end
 
 function handlePredicateCallback(key::String, ctx::Dash.CallbackContext)
@@ -81,14 +89,14 @@ function handlePredicateCallback(key::String, ctx::Dash.CallbackContext)
   return Dict(:op => op, :val => val), op, val
 end
 
-function handleFormAndNavigation(ctx::Dash.CallbackContext, diskState::DiskState)
+function handleFormAndNavigation(ctx::Dash.CallbackContext, diskState::DiskState, url::String)
   inputElement = ctx.triggered[1].prop_id
 
-  state = ctx.states["global-state.data"]
+  state = ctx.states["$(url)-global-state.data"]
   state = Dict("currentIndex" => state["currentIndex"], "images" => state["images"])
   
   if contains(inputElement, "button")
-    return handleNavigation(inputElement, state)
+    return handleNavigation(inputElement, state, url)
   end
 
   filters = Predicate[]
@@ -110,62 +118,82 @@ function handleFormAndNavigation(ctx::Dash.CallbackContext, diskState::DiskState
   
   state = viewState(diskState, filters)
 
-  return getCurrentImage(state), !hasNext(state), !hasPrev(state), state
+  return getCurrentImageContent(state), !hasNext(state), !hasPrev(state), state
 end
 
-function handleNavigation(direction::String, state::Dict{String, Any})
-  if direction == "next-button.n_clicks"
+function handleNavigation(direction::String, state::Dict{String, Any}, url::String)
+  if direction == "$(url)-next-button.n_clicks"
     next(state)
-    return getCurrentImage(state), !hasNext(state), !hasPrev(state), state
+    return getCurrentImageContent(state), !hasNext(state), !hasPrev(state), state
   else
     prev(state)
-    return getCurrentImage(state), !hasNext(state), !hasPrev(state), state
+    return getCurrentImageContent(state), !hasNext(state), !hasPrev(state), state
   end
 end
 
-function createUi!(app::Dash.DashApp, dataDir::String)
-  diskState = loadState(dataDir)
+function createUi(url::String, dataDir::String)
+  diskState = loadState(url, dataDir)
   state = viewState(diskState)
 
   navButtons = dbc_buttongroup([
-    navButton("< Prev", "prev-button", true),
-    navButton("Next >", "next-button", false)
+    navButton("< Prev", "$(url)-prev-button", true),
+    navButton("Next >", "$(url)-next-button", false)
   ])
 
   tmpls = values(diskState.queryTemplates)
-  queryForms = [queryForm(app, diskState, tmpl) for tmpl in tmpls]
-  stores = [Input("$(tmpl.key)-store", "data") for tmpl in tmpls]
+  queryForms = [queryForm(url, diskState, tmpl) for tmpl in tmpls]
 
-  app.layout = dbc_container([
-  html_center([
-    html_div([
-      dbc_row([
-        dbc_col(html_img(src=getCurrentImage(state), id="image"))
-        dbc_col(html_div([
-          navButtons
-          queryForms...
-        ]))
+  layout = dbc_container([
+    html_center([
+      html_div([
+        dbc_row([
+          dbc_col(wrapCurrentImage(state, url))
+          dbc_col(html_div([
+            navButtons
+            queryForms...
+          ]))
+        ])
       ])
     ])
+    dcc_store(id = "$(url)-global-state", data=state)
   ])
-  dcc_store(id = "global-state", data=state)
-])
 
-callback!(
-  app,
-  Output("image", "src"),
-  Output("next-button", "disabled"),
-  Output("prev-button", "disabled"),
-  Output("global-state", "data"),
-  Input("next-button", "n_clicks"),
-  Input("prev-button", "n_clicks"),
-  stores...,
-  State("global-state", "data"),
-  prevent_initial_call = true
-  ) do _...
-    handleFormAndNavigation(callback_context(), diskState)
-  end
+  return layout
+end
 
+function addCallbacks!(app::Dash.DashApp, url::String, dataDir::String)
+  diskState = loadState(url, dataDir)
+  tmpls = values(diskState.queryTemplates)
+  stores = [Input("$(tmpl.key)-store", "data") for tmpl in tmpls]
+
+  callback!(
+    app,
+    Output("$(url)-image", "src"),
+    Output("$(url)-next-button", "disabled"),
+    Output("$(url)-prev-button", "disabled"),
+    Output("$(url)-global-state", "data"),
+    Input("$(url)-next-button", "n_clicks"),
+    Input("$(url)-prev-button", "n_clicks"),
+    stores...,
+    State("$(url)-global-state", "data"),
+    prevent_initial_call = true
+    ) do _...
+      handleFormAndNavigation(callback_context(), diskState, url)
+    end
+
+    for tmpl in tmpls
+      addQueryFormCallbacks!(app, tmpl)
+    end
+end
+
+containerForContent(c::Content, ::String) = error("No container for $(c)")
+containerForContent(c::ImageContent, id::String) = html_img(src=getContentData(c), id=id)
+
+containerForContent(c::HTMLContent, id::String) = html_embed(src=getContentData(c), id=id, type="text/html", height=600, width=800)
+
+function wrapCurrentImage(state, url)
+  i = getCurrentImage(state)
+  return containerForContent(i, "$(url)-image")
 end
 
 viewState(diskState::DiskState) = viewState(diskState, Predicate[])
@@ -189,16 +217,23 @@ function prev(s::Dict{String, Any})
 end
 hasPrev(s::Dict{String, Any}) = s["currentIndex"] > 1
 
-function getCurrentImage(s::Dict{String, Any})
+function getCurrentImageContent(s::Dict{String, Any})::String
+  i = getCurrentImage(s)
+  return getContentData(i)
+end
+  
+function getCurrentImage(s::Dict{String, Any})::Content
   if length(s["images"]) == 0
-    return nothing
+    i = NoContent("bad metadata")
   end
 
   fn = s["images"][s["currentIndex"]]
-  if !isfile(fn)
-    fn = "assets/broken-image.png"
+
+  if isfile(fn)
+    i = contentFromFile(fn)
+  else
+    i = MissingContent()
   end
-    
-  s = read(fn)
-  return "data:image/png;base64," * base64encode(s)
+
+  return i
 end

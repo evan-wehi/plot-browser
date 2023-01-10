@@ -97,20 +97,22 @@ function entriesFilter(e::Dict{String, Any}, predicates::Vector{Predicate})::Boo
 end
 
 function entryFilter(key::String, value::Any, p::Predicate)::Bool
-  if key == p.key
+  p_key = join(split(p.key, "-")[2:end], "-")
+  if key == p_key
     return p.op(value, p.value)
   else
     return false
   end
 end
 
-function makeTemplates(entries::Vector{Dict{String, Any}})::Dict{String, PredicateTemplate}
+function makeTemplates(url::String, entries::Vector{Dict{String, Any}})::Dict{String, PredicateTemplate}
   td = Dict{String, PredicateTemplate}()
   for e in entries
     for (k, v) in e
       if k == "filename"
         continue
       end
+      k = "$(url)-$(k)"
       if !haskey(td, k)
         td[k] = PredicateTemplate(k, v)
       end

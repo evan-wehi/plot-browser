@@ -4,7 +4,7 @@ mutable struct DiskState
   queryTemplates::Dict{String, PredicateTemplate}
 end
 
-function loadState(dataDir::String)::DiskState
+function loadState(url::String, dataDir::String)::DiskState
   s = read(joinpath(dataDir, "images.json"), String)
   j = JSON.parse(s)
   entries::Vector{Dict{String, Any}} = j["images"]
@@ -13,7 +13,7 @@ function loadState(dataDir::String)::DiskState
     e["filename"] = joinpath(dataDir, fn)
   end
 
-  predicateTemplates = makeTemplates(entries)
+  predicateTemplates = makeTemplates(url, entries)
 
   return DiskState(entries, predicateTemplates)
 end

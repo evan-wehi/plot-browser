@@ -2,20 +2,20 @@
   "images": [
     {
       "filename": "DG15 - cell counts.jpg",
-      "patient": "DG19",
+      "patient": "DG15",
       "graph": "population over time",
       "some-value": 1
     },
     {
       "filename": "DG15 - histograms - Bcl2.jpg",
-      "patient": "DG19",
+      "patient": "DG15",
       "graph": "histograms",
       "protein": "Bcl2",
       "some-value": 1
     },
     {
       "filename": "DG15 - mean level - Bcl2.jpg",
-      "patient": "DG19",
+      "patient": "DG15",
       "graph": "protein mean over time",
       "some-value": 1
     },
