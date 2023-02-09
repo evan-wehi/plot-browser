@@ -1,6 +1,6 @@
 
 
-@enum ContentType HTML Image
+@enum ContentType HTML Image SVG
 
 abstract type Content end
 function getContentData(c::Content)::String 
@@ -30,6 +30,12 @@ end
 getContentData(h::HTMLContent)::String = h.data
 contentType(::HTMLContent) = HTML
 
+struct SVGContent <: Content
+  data::String
+end
+getContentData(h::SVGContent)::String = h.data
+contentType(::SVGContent) = SVG
+
 struct ImageContent <: Content
   data::String
 end
@@ -50,6 +56,10 @@ function contentFromFile(fn::String)
 
   if ext == "png"
     return ImageContent("data:image/png;base64," * base64encode(read(fn)))
+  end
+
+  if ext == "svg"
+    return ImageContent("data:image/svg+xml;base64," * base64encode(read(fn)))
   end
 
   if ext == "jpg" || ext == "jpeg"

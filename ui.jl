@@ -188,7 +188,6 @@ end
 
 containerForContent(c::Content, ::String) = error("No container for $(c)")
 containerForContent(c::ImageContent, id::String) = html_img(src=getContentData(c), id=id)
-
 containerForContent(c::HTMLContent, id::String) = html_embed(src=getContentData(c), id=id, type="text/html", height=600, width=800)
 
 function wrapCurrentImage(state, url)
