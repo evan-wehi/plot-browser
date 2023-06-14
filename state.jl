@@ -1,3 +1,4 @@
+using Glob
 
 mutable struct DiskState
   metadata::Vector{Dict{String, Any}}
@@ -5,9 +6,14 @@ mutable struct DiskState
 end
 
 function loadState(url::String, dataDir::String)::DiskState
-  s = read(joinpath(dataDir, "images.json"), String)
-  j = JSON.parse(s)
-  entries::Vector{Dict{String, Any}} = j["images"]
+  jpath = joinpath(dataDir, "images.json")
+  if isfile(jpath)
+    j = JSON.parsefile(jpath)
+    entries::Vector{Dict{String, Any}} = j["images"]
+  else
+    ifns = glob("*.json", dataDir)
+    entries = [JSON.parsefile(f) for f in ifns]
+  end
   for e in entries
     fn = e["filename"]
     e["filename"] = joinpath(dataDir, fn)
