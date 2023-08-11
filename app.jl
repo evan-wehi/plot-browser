@@ -123,6 +123,12 @@ function main()
     error("There must as many directories as urls")
   end
 
+  for url in urls
+    if occursin("-", url)
+      error("Do not use urls with '-' in them until that bug is fixed")
+    end
+  end
+
   routes = [Route(d, u) for (d, u) in zip(paths, urls)]
 
   app = makeApp(; url_base_pathname=base_url, routes=routes)

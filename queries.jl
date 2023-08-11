@@ -109,7 +109,7 @@ function makeTemplates(url::String, entries::Vector{Dict{String, Any}})::Dict{St
   td = Dict{String, PredicateTemplate}()
   for e in entries
     for (k, v) in e
-      if k == "filename"
+      if k in ["filename", "extra"]
         continue
       end
       k = "$(url)-$(k)"
