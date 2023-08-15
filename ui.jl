@@ -93,7 +93,7 @@ function handleFormAndNavigation(ctx::Dash.CallbackContext, diskState::DiskState
   inputElement = ctx.triggered[1].prop_id
 
   state = ctx.states["$(url)-global-state.data"]
-  state = Dict("currentIndex" => state["currentIndex"], "images" => state["images"])
+  state = Dict("currentIndex" => state["currentIndex"], "images" => state["images"], "metadata" => state["metadata"])
   
   if contains(inputElement, "button")
     return handleNavigation(inputElement, state, url)
@@ -117,16 +117,16 @@ function handleFormAndNavigation(ctx::Dash.CallbackContext, diskState::DiskState
   end
   
   state = viewState(diskState, filters)
-
+  
   return getCurrentImageContent(state), !hasNext(state), !hasPrev(state), state
 end
 
 function handleNavigation(direction::String, state::Dict{String, Any}, url::String)
   if direction == "$(url)-next-button.n_clicks"
-    next(state)
+    next!(state)
     return getCurrentImageContent(state), !hasNext(state), !hasPrev(state), state
   else
-    prev(state)
+    prev!(state)
     return getCurrentImageContent(state), !hasNext(state), !hasPrev(state), state
   end
 end
@@ -168,7 +168,7 @@ function addCallbacks!(app::Dash.DashApp, url::String, dataDir::String)
 
   callback!(
     app,
-    Output("$(url)-image", "src"),
+    Output("$(url)-image", "children"),
     Output("$(url)-next-button", "disabled"),
     Output("$(url)-prev-button", "disabled"),
     Output("$(url)-global-state", "data"),
@@ -187,41 +187,43 @@ function addCallbacks!(app::Dash.DashApp, url::String, dataDir::String)
 end
 
 containerForContent(c::Content, ::String) = error("No container for $(c)")
-containerForContent(c::ImageContent, id::String) = html_img(src=getContentData(c), id=id)
-containerForContent(c::HTMLContent, id::String) = html_embed(src=getContentData(c), id=id, type="text/html", height=600, width=800)
+containerForContent(c::ImageContent) = html_img(src=getContentData(c))
+containerForContent(c::HTMLContent) = html_embed(src=getContentData(c), type="text/html", height=600, width=800)
 
 function wrapCurrentImage(state, url)
-  i = getCurrentImage(state)
-  return containerForContent(i, "$(url)-image")
+  i, md = getCurrentImage(state)
+  return html_div([containerForContent(i), html_code(html_pre(md), style = Dict("text-align" => "left"))], id="$(url)-image")
 end
 
 viewState(diskState::DiskState) = viewState(diskState, Predicate[])
 function viewState(diskState::DiskState, predicates::Vector{Predicate})
   d = Dict{String, Any}()
   d["currentIndex"] = 1
-  d["images"] = [md["filename"] for md in subset(diskState.metadata, predicates)]
-  d
+  filtered_subset = subset(diskState.metadata, predicates)
+  d["images"] = [md["filename"] for md in filtered_subset]
+  d["metadata"] = [delete!(copy(md), "filename") for md in filtered_subset]
+  return d
 end
-function next(s::Dict{String, Any})
+function next!(s::Dict{String, Any})
   if s["currentIndex"] < length(s["images"])
     s["currentIndex"] += 1
   end
 end
 hasNext(s::Dict{String, Any}) = s["currentIndex"] < length(s["images"])
 
-function prev(s::Dict{String, Any})
+function prev!(s::Dict{String, Any})
   if s["currentIndex"] > 1
     s["currentIndex"] -= 1
   end
 end
 hasPrev(s::Dict{String, Any}) = s["currentIndex"] > 1
 
-function getCurrentImageContent(s::Dict{String, Any})::String
-  i = getCurrentImage(s)
-  return getContentData(i)
+function getCurrentImageContent(s::Dict{String, Any})
+  i, md = getCurrentImage(s)
+  return html_div([containerForContent(i), html_code(html_pre(md), style = Dict("text-align" => "left"))])
 end
   
-function getCurrentImage(s::Dict{String, Any})::Content
+function getCurrentImage(s::Dict{String, Any})::Tuple{Content, String}
   if length(s["images"]) == 0
     i = NoContent("bad metadata")
   end
@@ -234,5 +236,10 @@ function getCurrentImage(s::Dict{String, Any})::Content
     i = MissingContent()
   end
 
-  return i
+  mdd = s["metadata"][s["currentIndex"]]
+  io = IOBuffer()
+  JSON.print(io, mdd, 2)
+  md = String(take!(io))
+  
+  return i, md
 end

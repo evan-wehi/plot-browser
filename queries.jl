@@ -73,7 +73,6 @@ function Predicate(key::String, op::String, val::String, template::PredicateTemp
   Predicate(key, op, val)
 end
 
-
 function subset(entries::Vector{Dict{String, Any}}, predicates::Vector{Predicate})::Vector{Dict{String, Any}}
   return filter((e) -> entriesFilter(e, predicates), entries)
 end
